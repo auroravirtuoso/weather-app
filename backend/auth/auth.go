@@ -16,12 +16,12 @@ import (
 var jwtKey = []byte("secret_key")
 
 type Credentials struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	email    string `json:"email"`
+	password string `json:"password"`
 }
 
 type Claims struct {
-	Username string `json:"username"`
+	email string `json:"email"`
 	jwt.StandardClaims
 }
 
@@ -37,10 +37,11 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(creds.Username)
-	fmt.Println(creds.Password)
+	fmt.Println(creds)
+	fmt.Println(creds.email)
+	fmt.Println(creds.password)
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(creds.Password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(creds.password), bcrypt.DefaultCost)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
@@ -50,7 +51,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	collection := client.Database("weatherApp").Collection("users")
 	_, err = collection.InsertOne(context.TODO(), map[string]interface{}{
-		"username": creds.Username,
+		"email":    creds.email,
 		"password": string(hashedPassword),
 	})
 
@@ -74,20 +75,20 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(creds.Username)
-	fmt.Println(creds.Password)
+	fmt.Println(creds.email)
+	fmt.Println(creds.password)
 
 	var storedCreds Credentials
 	collection := client.Database("weatherApp").Collection("users")
-	err = collection.FindOne(context.TODO(), map[string]interface{}{"username": creds.Username}).Decode(&storedCreds)
+	err = collection.FindOne(context.TODO(), map[string]interface{}{"email": creds.email}).Decode(&storedCreds)
 	if err != nil {
-		http.Error(w, "Username not found", http.StatusUnauthorized)
+		http.Error(w, "Email not found", http.StatusUnauthorized)
 		return
 	}
 
-	fmt.Println("Username found")
+	fmt.Println("Email found")
 
-	if err := bcrypt.CompareHashAndPassword([]byte(storedCreds.Password), []byte(creds.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(storedCreds.password), []byte(creds.password)); err != nil {
 		http.Error(w, "Invalid password", http.StatusUnauthorized)
 		return
 	}
@@ -96,7 +97,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	expirationTime := time.Now().Add(5 * time.Minute)
 	claims := &Claims{
-		Username: creds.Username,
+		email: creds.email,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
 		},

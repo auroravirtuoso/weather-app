@@ -1,18 +1,18 @@
 package weather
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/auroravirtuoso/weather-app/backend/auth"
+	"github.com/dgrijalva/jwt-go"
 )
 
-var client, _ = mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://localhost:27017"))
+// var client, _ = mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://localhost:27017"))
 
 type WeatherData struct {
 	Date time.Time `json:"date"`
@@ -28,20 +28,21 @@ type Geolocation struct {
 func GetLatLonFromCity(city string, state string, country string) (geoarr []Geolocation, err error) {
 	geoarr = make([]Geolocation, 0)
 
-	var url string = "https://api.openweathermap.org/geo/1.0/direct?q="
-	url += city
+	var api_url string = "https://api.openweathermap.org/geo/1.0/direct?q="
+	api_url += url.QueryEscape(city)
 	if len(state) > 0 {
-		url += ","
-		url += state
+		api_url += ","
+		api_url += url.QueryEscape(state)
 	}
 	if len(country) > 0 {
-		url += ","
-		url += country
+		api_url += ","
+		api_url += url.QueryEscape(country)
 	}
-	url += "&limit=5"
-	url += "&appid=9bd398148984a3f361fa58d491cc53e5" // + os.Getenv("OPENWEATHERMAP_API_KEY")
-	fmt.Println(url)
-	resp, e := http.Get(url)
+	api_url += "&limit=5"
+	api_url += "&appid=9bd398148984a3f361fa58d491cc53e5" // + os.Getenv("OPENWEATHERMAP_API_KEY")
+	// api_url = url.QueryEscape(api_url)
+	fmt.Println(api_url)
+	resp, e := http.Get(api_url)
 	if e != nil {
 		err = e
 		return
@@ -89,6 +90,8 @@ func GetLatLonFromCityHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Fetch Error", http.StatusInternalServerError)
 	}
 
+	fmt.Println(geoarr)
+
 	if len(geoarr) == 0 {
 		http.Error(w, "Specified city not found", http.StatusNotFound)
 	}
@@ -97,28 +100,6 @@ func GetLatLonFromCityHandler(w http.ResponseWriter, r *http.Request) {
 	results["lat"] = geoarr[0].lat
 	results["lon"] = geoarr[0].lon
 	json.NewEncoder(w).Encode(results)
-}
-
-type HourlyUnits struct {
-	time          string `json:"time"`
-	temperature2m string `json:"temperature_2m"`
-}
-
-type WeatherResponse struct {
-	time          []string  `json:"time"`
-	temperature2m []float64 `json:"temperature_2m"`
-}
-
-type OpenMeteoHistoryBody struct {
-	latitude              float64         `json:"latitude"`
-	longitude             float64         `json:"longitude"`
-	generationtime_ms     float64         `json:"generationtime_ms"`
-	utc_offset_seconds    int             `json:"utc_offset_seconds"`
-	timezone              string          `json:"timezone"`
-	timezone_abbreviation string          `json:"timezone_abbreviation"`
-	elevation             float64         `json:"elevation"`
-	hourly_units          HourlyUnits     `json:"hourly_units"`
-	hourly                WeatherResponse `json:"hourly"`
 }
 
 // https://open-meteo.com/en/docs
@@ -169,18 +150,24 @@ func GetWeatherDataHandler(w http.ResponseWriter, r *http.Request) {
 	// fmt.Println(hourly)
 	// fmt.Println("----------")
 
+	tokenCookie, err := r.Cookie("token")
+	if err != nil {
+		http.Error(w, "Token not found", http.StatusUnauthorized)
+	}
+
 	/* Authentication */
 	// tokenStr := r.Header.Get("Authorization")
-	// claims := &auth.Claims{}
+	tokenStr := tokenCookie.Value
+	claims := &auth.Claims{}
 
-	// tkn, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-	// 	return []byte("secret_key"), nil
-	// })
+	tkn, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte("secret_key"), nil
+	})
 
-	// if err != nil || !tkn.Valid {
-	// 	http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	// 	return
-	// }
+	if err != nil || !tkn.Valid {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	geoarr, err := GetLatLonFromCity(city, state, country)
 	if err != nil {
@@ -191,14 +178,15 @@ func GetWeatherDataHandler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(geoarr)
 
-	var url string = "https://archive-api.open-meteo.com/v1/era5"
-	url += fmt.Sprintf("?latitude=%f", geoarr[0].lat)
-	url += fmt.Sprintf("&longitude=%f", geoarr[0].lon)
-	url += "&start_date=" + start_date
-	url += "&end_date=" + end_date
-	url += "&hourly=" + hourly
-	fmt.Println(url)
-	resp, err := http.Get(url)
+	var api_url string = "https://archive-api.open-meteo.com/v1/era5"
+	api_url += fmt.Sprintf("?latitude=%f", geoarr[0].lat)
+	api_url += fmt.Sprintf("&longitude=%f", geoarr[0].lon)
+	api_url += "&start_date=" + url.QueryEscape(start_date)
+	api_url += "&end_date=" + url.QueryEscape(end_date)
+	api_url += "&hourly=" + url.QueryEscape(hourly)
+	// api_url = url.QueryEscape(api_url)
+	fmt.Println(api_url)
+	resp, err := http.Get(api_url)
 	if err != nil {
 		http.Error(w, "API Error", http.StatusInternalServerError)
 	}
