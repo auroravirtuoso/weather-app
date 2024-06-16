@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -24,9 +25,11 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-var client, _ = mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://mongo:27017"))
+var client, _ = mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://localhost:27017"))
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Register")
+
 	var creds Credentials
 	err := json.NewDecoder(r.Body).Decode(&creds)
 	if err != nil {
@@ -34,11 +37,16 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println(creds.Username)
+	fmt.Println(creds.Password)
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(creds.Password), bcrypt.DefaultCost)
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
+
+	fmt.Println("hashedPassword generated")
 
 	collection := client.Database("weatherApp").Collection("users")
 	_, err = collection.InsertOne(context.TODO(), map[string]interface{}{
@@ -51,16 +59,23 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println("Successfully registered")
+
 	w.WriteHeader(http.StatusCreated)
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Login")
+
 	var creds Credentials
 	err := json.NewDecoder(r.Body).Decode(&creds)
 	if err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
+
+	fmt.Println(creds.Username)
+	fmt.Println(creds.Password)
 
 	var storedCreds Credentials
 	collection := client.Database("weatherApp").Collection("users")
@@ -70,10 +85,14 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println("Username found")
+
 	if err := bcrypt.CompareHashAndPassword([]byte(storedCreds.Password), []byte(creds.Password)); err != nil {
 		http.Error(w, "Invalid password", http.StatusUnauthorized)
 		return
 	}
+
+	fmt.Println("Password match")
 
 	expirationTime := time.Now().Add(5 * time.Minute)
 	claims := &Claims{
