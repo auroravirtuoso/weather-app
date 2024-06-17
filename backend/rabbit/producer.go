@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/auroravirtuoso/weather-app/backend/database"
+	"github.com/auroravirtuoso/weather-app/backend/geolocation"
 	"github.com/auroravirtuoso/weather-app/backend/models"
-	"github.com/auroravirtuoso/weather-app/backend/weather"
 	"github.com/streadway/amqp"
 )
 
@@ -34,7 +34,7 @@ func ProduceWeatherData(email string) {
 		return
 	}
 
-	geoarr, err := weather.GetLatLonFromCity(user.City, user.State, user.Country)
+	geoarr, err := geolocation.GetLatLonFromCity(user.City, user.State, user.Country)
 	if err != nil {
 		FailOnError(err, "Geocoding Error")
 		return
