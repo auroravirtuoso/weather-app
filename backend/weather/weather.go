@@ -10,6 +10,7 @@ import (
 
 	"github.com/auroravirtuoso/weather-app/backend/auth"
 	"github.com/auroravirtuoso/weather-app/backend/database"
+	"github.com/auroravirtuoso/weather-app/backend/geolocation"
 	"github.com/auroravirtuoso/weather-app/backend/models"
 	"github.com/dgrijalva/jwt-go"
 )
@@ -111,8 +112,8 @@ func GetWeatherDataHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(geoarr)
 
 	var api_url string = "https://archive-api.open-meteo.com/v1/era5"
-	api_url += fmt.Sprintf("?latitude=%f", geoarr[0].lat)
-	api_url += fmt.Sprintf("&longitude=%f", geoarr[0].lon)
+	api_url += fmt.Sprintf("?latitude=%f", geoarr[0].Lat)
+	api_url += fmt.Sprintf("&longitude=%f", geoarr[0].Lon)
 	api_url += "&start_date=" + url.QueryEscape(start_date)
 	api_url += "&end_date=" + url.QueryEscape(end_date)
 	api_url += "&hourly=" + url.QueryEscape(hourly)

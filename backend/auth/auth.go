@@ -10,6 +10,7 @@ import (
 
 	"github.com/auroravirtuoso/weather-app/backend/database"
 	"github.com/auroravirtuoso/weather-app/backend/models"
+	"github.com/auroravirtuoso/weather-app/backend/rabbit"
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -62,12 +63,16 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// _, err = collection.InsertOne(context.TODO(), user)
+	user.Time = make([]string, 0)
+	user.Temperature_2m = make([]string, 0)
 	_, err = collection.InsertOne(context.TODO(), map[string]interface{}{
-		"email":    user.Email,
-		"password": string(hashedPassword),
-		"city":     user.City,
-		"state":    user.State,
-		"country":  user.Country,
+		"email":          user.Email,
+		"password":       string(hashedPassword),
+		"city":           user.City,
+		"state":          user.State,
+		"country":        user.Country,
+		"time":           user.Time,
+		"temperature_2m": user.Temperature_2m,
 	})
 
 	// collection := client.Database("weatherApp").Collection("users")
@@ -82,6 +87,8 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println("Successfully registered")
+
+	go rabbit.ProduceWeatherData(user.Email)
 
 	res := make(map[string]bool)
 	res["success"] = true

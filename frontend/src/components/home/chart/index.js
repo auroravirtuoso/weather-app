@@ -9,10 +9,17 @@ export default function BasicLineChart({time, temperature}) {
 	}
 	return (
 		<LineChart
-			xAxis={[{ data: time }]}
+			xAxis={[{
+				data: time,
+				scaleType: 'time',
+				valueFormatter: (date) => date.getFullYear() + "/" + date.getMonth() + "/" + date.getDate(),
+				label: "Time"
+			}]}
 			series={[
 				{
 					data: temperature,
+					showMark: false,
+					label: "Temperature"
 				},
 			]}
 			width={1200}

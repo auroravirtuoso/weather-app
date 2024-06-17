@@ -6,11 +6,13 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
+	"time"
 )
 
 type Geolocation struct {
-	lat float64 `json:"lat"`
-	lon float64 `json:"lon"`
+	Lat float64 `json:"lat"`
+	Lon float64 `json:"lon"`
 }
 
 // https://openweathermap.org/api/geocoding-api
@@ -28,10 +30,13 @@ func GetLatLonFromCity(city string, state string, country string) (geoarr []Geol
 		api_url += url.QueryEscape(country)
 	}
 	api_url += "&limit=5"
-	api_url += "&appid=9bd398148984a3f361fa58d491cc53e5" // + os.Getenv("OPENWEATHERMAP_API_KEY")
+	api_url += "&appid=" + os.Getenv("OPENWEATHERMAP_API_KEY")
 	// api_url = url.QueryEscape(api_url)
 	fmt.Println(api_url)
-	resp, e := http.Get(api_url)
+	client := http.Client{
+		Timeout: 1 * time.Minute,
+	}
+	resp, e := client.Get(api_url)
 	if e != nil {
 		err = e
 		return
@@ -52,8 +57,8 @@ func GetLatLonFromCity(city string, state string, country string) (geoarr []Geol
 	for _, itf := range data {
 		result := itf.(map[string]interface{})
 		var geo Geolocation
-		geo.lat = result["lat"].(float64)
-		geo.lon = result["lon"].(float64)
+		geo.Lat = result["lat"].(float64)
+		geo.Lon = result["lon"].(float64)
 		geoarr = append(geoarr, geo)
 	}
 
@@ -88,7 +93,7 @@ func GetLatLonFromCityHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	results := make(map[string]float64)
-	results["lat"] = geoarr[0].lat
-	results["lon"] = geoarr[0].lon
+	results["lat"] = geoarr[0].Lat
+	results["lon"] = geoarr[0].Lon
 	json.NewEncoder(w).Encode(results)
 }

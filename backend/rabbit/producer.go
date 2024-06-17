@@ -47,27 +47,31 @@ func ProduceWeatherData(email string) {
 
 	var start_date string
 	if len(user.Time) == 0 {
-		start_date = time.Now().AddDate(-3, 0, -1).Format("2001-01-01")
+		start_date = time.Now().AddDate(-3, 0, -1).Format("2006-01-02")
+		// start_date = time.Now().AddDate(0, 0, -1).Format("2006-01-02")
 	} else {
-		last, err := time.Parse("2001-01-01T00:00", user.Time[len(user.Time)-1])
+		last, err := time.Parse("2006-01-02T15:04", user.Time[len(user.Time)-1])
 		if err != nil {
 			FailOnError(err, "Invalid Time Format")
 			return
 		}
-		start_date = last.Format("2001-01-01")
+		start_date = last.Format("2006-01-02")
 	}
-
-	end_date := time.Now().Format("2001-01-01")
+	end_date := time.Now().Format("2006-01-02")
+	fmt.Println(time.Now().AddDate(-3, 0, -1).Format("2006-01-02") + " -> " + time.Now().Format("2006-01-02"))
 
 	var api_url string = "https://archive-api.open-meteo.com/v1/era5"
-	api_url += fmt.Sprintf("?latitude=%f", geoarr[0].lat)
-	api_url += fmt.Sprintf("&longitude=%f", geoarr[0].lon)
+	api_url += fmt.Sprintf("?latitude=%f", geoarr[0].Lat)
+	api_url += fmt.Sprintf("&longitude=%f", geoarr[0].Lon)
 	api_url += "&start_date=" + url.QueryEscape(start_date)
 	api_url += "&end_date=" + url.QueryEscape(end_date)
 	api_url += "&hourly=" + "temperature_2m"
 	// api_url = url.QueryEscape(api_url)
 	fmt.Println(api_url)
-	resp, err := http.Get(api_url)
+	client := http.Client{
+		Timeout: 1 * time.Minute,
+	}
+	resp, err := client.Get(api_url)
 	if err != nil {
 		FailOnError(err, "API Error")
 	}
@@ -88,17 +92,14 @@ func ProduceWeatherData(email string) {
 
 	var cnt int = 0
 	for i := 0; i < len(temperature_2m); i++ {
-		val, err := json.Marshal(temperature_2m[i])
-		if err != nil {
-			FailOnError(err, "Marshal Failure")
-			break
-		} else if string(val) == "\"null\"" {
+		if temperature_2m[i] == nil {
 			break
 		}
 		cnt++
 	}
 	time_arr = time_arr[:cnt]
 	temperature_2m = temperature_2m[:cnt]
+	fmt.Println("cnt: ", cnt)
 
 	messageBody := map[string]interface{}{
 		"email": user.Email,
@@ -109,6 +110,11 @@ func ProduceWeatherData(email string) {
 	}
 	var messageJSON []byte
 	messageJSON, err = json.Marshal(messageBody)
+
+	if err != nil {
+		FailOnError(err, "Marshal failure")
+		return
+	}
 
 	err = Ch.Publish(
 		"",
@@ -121,5 +127,6 @@ func ProduceWeatherData(email string) {
 		})
 	FailOnError(err, "Failed to publish a message")
 
-	log.Printf(" [x] Sent %s", body)
+	log.Println(" [x] Sent")
+	// log.Printf(" [x] Sent %s", messageJSON)
 }

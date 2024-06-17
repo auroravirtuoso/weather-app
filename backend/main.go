@@ -37,6 +37,7 @@ func main() {
 
 	// Weather routes
 	r.HandleFunc("/api/v1/weather", middlewares.CORS(weather.GetWeatherDataHandler)).Methods("GET", "OPTIONS")
+	r.HandleFunc("/api/v1/userweather", middlewares.CORS(weather.GetUserWeatherDataHandler)).Methods("GET", "OPTIONS")
 	r.HandleFunc("/api/v1/geocode", middlewares.CORS(geolocation.GetLatLonFromCityHandler)).Methods("POST", "OPTIONS")
 
 	log.Println("Starting server on :8080")

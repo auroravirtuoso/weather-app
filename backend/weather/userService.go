@@ -49,11 +49,11 @@ func GetUserWeatherDataHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go rabbit.ProduceWeatherData()
+	go rabbit.ProduceWeatherData(claims.Email)
 
 	results := make(map[string]interface{})
 	results["time"] = user.Time
-	results["temperature_2m"] = user.Temperature
+	results["temperature_2m"] = user.Temperature_2m
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
