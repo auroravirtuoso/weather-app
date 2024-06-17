@@ -1,15 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/auroravirtuoso/weather-app/backend/auth"
 	"github.com/auroravirtuoso/weather-app/backend/middlewares"
+	"github.com/auroravirtuoso/weather-app/backend/rabbit"
 	"github.com/joho/godotenv"
-	"github.com/streadway/amqp"
 
 	"github.com/auroravirtuoso/weather-app/backend/weather"
 
@@ -23,12 +22,7 @@ func main() {
 	}
 
 	rabbitmqURL := os.Getenv("RABBITMQ_URL")
-
-	fmt.Println(rabbitmqURL)
-
-	conn, err := amqp.Dial(rabbitmqURL)
-	rabbit.failOnError(err, "Failed to connect to RabbitMQ")
-	defer conn.Close()
+	rabbit.InitializeRabbitMQ(rabbitmqURL)
 
 	// ch, err := conn.Channel()
 	// if err != nil {

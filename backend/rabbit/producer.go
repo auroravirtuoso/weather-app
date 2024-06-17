@@ -6,7 +6,7 @@ import (
 	"github.com/streadway/amqp"
 )
 
-func produceWeatherData(ch *amqp.Channel) {
+func produceWeatherData() {
 	q, err := ch.QueueDeclare(
 		"weather_data",
 		false,
@@ -15,7 +15,7 @@ func produceWeatherData(ch *amqp.Channel) {
 		false,
 		nil,
 	)
-	failOnError(err, "Failed to declare a queue")
+	FailOnError(err, "Failed to declare a queue")
 
 	body := "Weather data payload"
 	err = ch.Publish(
@@ -27,7 +27,7 @@ func produceWeatherData(ch *amqp.Channel) {
 			ContentType: "text/plain",
 			Body:        []byte(body),
 		})
-	failOnError(err, "Failed to publish a message")
+	FailOnError(err, "Failed to publish a message")
 
 	log.Printf(" [x] Sent %s", body)
 }

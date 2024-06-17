@@ -2,11 +2,9 @@ package rabbit
 
 import (
 	"log"
-
-	"github.com/streadway/amqp"
 )
 
-func consumeWeatherData(ch *amqp.Channel) {
+func consumeWeatherData() {
 	q, err := ch.QueueDeclare(
 		"weather_data",
 		false,
@@ -15,7 +13,7 @@ func consumeWeatherData(ch *amqp.Channel) {
 		false,
 		nil,
 	)
-	failOnError(err, "Failed to declare a queue")
+	FailOnError(err, "Failed to declare a queue")
 
 	msgs, err := ch.Consume(
 		q.Name,
@@ -26,7 +24,7 @@ func consumeWeatherData(ch *amqp.Channel) {
 		false,
 		nil,
 	)
-	failOnError(err, "Failed to register a consumer")
+	FailOnError(err, "Failed to register a consumer")
 
 	forever := make(chan bool)
 
