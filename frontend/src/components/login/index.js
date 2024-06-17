@@ -15,7 +15,7 @@ function Login() {
 		}).then(res => {
 			console.log(res);
 			if (res.data.success === true) {
-				// Cookie.set('token', res.data.token);
+				Cookie.set('token', res.data.token);
 				window.location = "/";
 			} else {
 				alert("Invalid Email or Password");

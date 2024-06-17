@@ -1,14 +1,18 @@
 package weather
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/auroravirtuoso/weather-app/backend/auth"
+	"github.com/auroravirtuoso/weather-app/backend/database"
+	"github.com/auroravirtuoso/weather-app/backend/models"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -72,6 +76,8 @@ func GetLatLonFromCity(city string, state string, country string) (geoarr []Geol
 }
 
 func GetLatLonFromCityHandler(w http.ResponseWriter, r *http.Request) {
+	// w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	fmt.Println("GetLatLonFromCityHandler")
 	var vars map[string]string
 	err := json.NewDecoder(r.Body).Decode(&vars)
@@ -104,7 +110,39 @@ func GetLatLonFromCityHandler(w http.ResponseWriter, r *http.Request) {
 
 // https://open-meteo.com/en/docs
 func GetWeatherDataHandler(w http.ResponseWriter, r *http.Request) {
+	// w.Header().Set("Access-Control-Allow-Origin", "*")
 	// vars := mux.Vars(r)
+
+	tokenCookie, err := r.Cookie("token")
+	if err != nil {
+		http.Error(w, "Token not found", http.StatusUnauthorized)
+	}
+
+	/* Authentication */
+	// tokenStr := r.Header.Get("Authorization")
+	tokenStr := tokenCookie.Value
+	fmt.Println(tokenStr)
+	claims := &auth.Claims{}
+
+	tkn, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("JWT_SECRET_KEY")), nil
+	})
+
+	if err != nil || !tkn.Valid {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	fmt.Println("Authorized")
+
+	var user models.User
+	client := database.DBinstance()
+	collections := database.OpenCollection(client, "users")
+	err = collections.FindOne(context.TODO(), map[string]interface{}{"email": claims.Email}).Decode(&user)
+	if err != nil {
+		http.Error(w, "Specified email not found", http.StatusInternalServerError)
+		return
+	}
 
 	var city string
 	query := r.URL.Query()
@@ -112,15 +150,20 @@ func GetWeatherDataHandler(w http.ResponseWriter, r *http.Request) {
 	if query.Has("city") {
 		city = query.Get("city")
 	} else {
-		http.Error(w, "city is required", http.StatusBadRequest)
+		city = user.City
+		// http.Error(w, "city is required", http.StatusBadRequest)
 	}
 	var state string
 	if query.Has("state") {
 		state = query.Get("state")
+	} else {
+		state = user.State
 	}
 	var country string
 	if query.Has("country") {
 		country = query.Get("country")
+	} else {
+		country = user.Country
 	}
 	var start_date string
 	if query.Has("start_date") {
@@ -138,7 +181,8 @@ func GetWeatherDataHandler(w http.ResponseWriter, r *http.Request) {
 	if query.Has("hourly") {
 		hourly = query.Get("hourly")
 	} else {
-		http.Error(w, "hourly is required", http.StatusBadRequest)
+		hourly = "temperature_2m"
+		// http.Error(w, "hourly is required", http.StatusBadRequest)
 	}
 
 	// fmt.Println("----------")
@@ -149,25 +193,6 @@ func GetWeatherDataHandler(w http.ResponseWriter, r *http.Request) {
 	// fmt.Println(end_date)
 	// fmt.Println(hourly)
 	// fmt.Println("----------")
-
-	tokenCookie, err := r.Cookie("token")
-	if err != nil {
-		http.Error(w, "Token not found", http.StatusUnauthorized)
-	}
-
-	/* Authentication */
-	// tokenStr := r.Header.Get("Authorization")
-	tokenStr := tokenCookie.Value
-	claims := &auth.Claims{}
-
-	tkn, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte("secret_key"), nil
-	})
-
-	if err != nil || !tkn.Valid {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
 
 	geoarr, err := GetLatLonFromCity(city, state, country)
 	if err != nil {
@@ -208,40 +233,8 @@ func GetWeatherDataHandler(w http.ResponseWriter, r *http.Request) {
 	// time := body_hourly["time"].([]string)
 	// temperature_2m := body_hourly["temperature_2m"].([]float64)
 
-	json.NewEncoder(w).Encode(body_hourly)
-
-	// collection := client.Database("weatherApp").Collection("weatherData")
-
-	// var results []WeatherData
-	// var cursor *mongo.Cursor
-
-	// switch period {
-	// case "month":
-	// 	cursor, err = collection.Find(context.TODO(), map[string]interface{}{"date": map[string]interface{}{"$gte": time.Now().AddDate(0, -1, 0)}})
-	// case "year":
-	// 	cursor, err = collection.Find(context.TODO(), map[string]interface{}{"date": map[string]interface{}{"$gte": time.Now().AddDate(-1, 0, 0)}})
-	// case "3years":
-	// 	cursor, err = collection.Find(context.TODO(), map[string]interface{}{"date": map[string]interface{}{"$gte": time.Now().AddDate(-3, 0, 0)}})
-	// default:
-	// 	http.Error(w, "Invalid period", http.StatusBadRequest)
-	// 	return
-	// }
-
-	// if err != nil {
-	// 	http.Error(w, "Internal server error", http.StatusInternalServerError)
-	// 	return
-	// }
-
-	// defer cursor.Close(context.TODO())
-	// for cursor.Next(context.TODO()) {
-	// 	var weather WeatherData
-	// 	err := cursor.Decode(&weather)
-	// 	if err != nil {
-	// 		http.Error(w, "Internal server error", http.StatusInternalServerError)
-	// 		return
-	// 	}
-	// 	results = append(results, weather)
-	// }
-
-	// json.NewEncoder(w).Encode(results)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"results": body_hourly,
+	})
 }
