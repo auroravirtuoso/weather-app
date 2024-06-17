@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"time"
 
 	"github.com/auroravirtuoso/weather-app/backend/auth"
 	"github.com/auroravirtuoso/weather-app/backend/database"
@@ -16,11 +15,6 @@ import (
 )
 
 // var client, _ = mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://localhost:27017"))
-
-type WeatherData struct {
-	Date time.Time `json:"date"`
-	Temp float64   `json:"temp"`
-}
 
 // https://open-meteo.com/en/docs
 func GetWeatherDataHandler(w http.ResponseWriter, r *http.Request) {
@@ -50,9 +44,8 @@ func GetWeatherDataHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Authorized")
 
 	var user models.User
-	client := database.DBinstance()
-	collections := database.OpenCollection(client, "users")
-	err = collections.FindOne(context.TODO(), map[string]interface{}{"email": claims.Email}).Decode(&user)
+	collection := database.OpenCollection(database.Client, "users")
+	err = collection.FindOne(context.TODO(), map[string]interface{}{"email": claims.Email}).Decode(&user)
 	if err != nil {
 		http.Error(w, "Specified email not found", http.StatusInternalServerError)
 		return
@@ -108,7 +101,7 @@ func GetWeatherDataHandler(w http.ResponseWriter, r *http.Request) {
 	// fmt.Println(hourly)
 	// fmt.Println("----------")
 
-	geoarr, err := GetLatLonFromCity(city, state, country)
+	geoarr, err := geolocation.GetLatLonFromCity(city, state, country)
 	if err != nil {
 		http.Error(w, "Geocoding Error", http.StatusInternalServerError)
 	} else if len(geoarr) == 0 {

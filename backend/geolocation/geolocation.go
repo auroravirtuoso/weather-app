@@ -1,4 +1,4 @@
-package weather
+package geolocation
 
 import (
 	"encoding/json"
@@ -9,8 +9,8 @@ import (
 )
 
 type Geolocation struct {
-	lat float64
-	lon float64
+	lat float64 `json:"lat"`
+	lon float64 `json:"lon"`
 }
 
 // https://openweathermap.org/api/geocoding-api

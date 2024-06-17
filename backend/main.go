@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/auroravirtuoso/weather-app/backend/auth"
+	"github.com/auroravirtuoso/weather-app/backend/geolocation"
 	"github.com/auroravirtuoso/weather-app/backend/middlewares"
 	"github.com/auroravirtuoso/weather-app/backend/rabbit"
 	"github.com/joho/godotenv"
@@ -21,16 +22,10 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	rabbitmqURL := os.Getenv("RABBITMQ_URL")
-	rabbit.InitializeRabbitMQ(rabbitmqURL)
+	rabbit.InitializeRabbitMQ(os.Getenv("RABBITMQ_URL"))
+	defer rabbit.Conn.Close()
 
-	// ch, err := conn.Channel()
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
-	// produceWeatherData(ch)
-	// consumeWeatherData(ch)
+	go rabbit.ConsumeWeatherData()
 
 	r := mux.NewRouter()
 
@@ -42,7 +37,7 @@ func main() {
 
 	// Weather routes
 	r.HandleFunc("/api/v1/weather", middlewares.CORS(weather.GetWeatherDataHandler)).Methods("GET", "OPTIONS")
-	r.HandleFunc("/api/v1/geocode", middlewares.CORS(weather.GetLatLonFromCityHandler)).Methods("POST", "OPTIONS")
+	r.HandleFunc("/api/v1/geocode", middlewares.CORS(geolocation.GetLatLonFromCityHandler)).Methods("POST", "OPTIONS")
 
 	log.Println("Starting server on :8080")
 	http.ListenAndServe(":8080", r)
