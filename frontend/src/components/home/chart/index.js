@@ -15,8 +15,8 @@ export default function BasicLineChart({time, temperature}) {
 					data: temperature,
 				},
 			]}
-			width={500}
-			height={300}
+			width={1200}
+			height={600}
 		/>
 	);
 }

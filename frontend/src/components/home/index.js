@@ -15,11 +15,15 @@ function Home() {
 		start_date = start_date.toISOString().slice(0, 10);
 		end_date = end_date.toISOString().slice(0, 10);
 		axios.get(`${backend_url}/api/v1/weather?start_date=${start_date}&end_date=${end_date}`, {
-      withCredentials: true
-    }).then(res => {
+	  		withCredentials: true
+		}).then(res => {
 			console.log(res);
 			if (res.data.success === true) {
-				setTime(res.data.results.time);
+				// setTime(res.data.results.time);
+				let idx = [];
+				for (let i = 0; i < res.data.results.time.length; i++)
+					idx.push(i);
+				setTime(idx);
 				setTemperature(res.data.results.temperature_2m);
 			} else {
 				alert("Invalid Email or Password");
