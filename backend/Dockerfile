@@ -1,15 +1,19 @@
-FROM golang:1.22.2
+FROM golang:1.22
 
-WORKDIR /app
+# Set work directory
+WORKDIR /usr/src/app
 
-COPY go.mod .
-COPY go.sum .
-RUN go mod download
-
+# Copy all source
 COPY . .
 
-RUN go build -o /backend
+# Download dependencies
+RUN go mod download 
 
+# Build module
+RUN go build -o main .
+
+# Set port
 EXPOSE 8080
 
-CMD ["/backend"]
+# Launch backend
+CMD ["./main"]

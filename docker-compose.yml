@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "80:80"
+    environment:
+      - REACT_APP_BACKEND_URL=http://localhost:8080
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8080:8080"
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017
+      - MONGODB_DATABASE=weatherApp
+      - OPENWEATHERMAP_API_KEY=9bd398148984a3f361fa58d491cc53e5
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - REACT_APP_FRONTEND_URL=http://localhost
+      - JWT_SECRET_KEY=secret_key
+      - TOKEN_EXPIRATION_TIME=5
+    depends_on:
+      wait-for-rmq:
+        condition: service_completed_successfully  
+      wait-for-db:
+        condition: service_completed_successfully  
+    command: ./main
+
+  wait-for-rmq:
+    image: atkrad/wait4x
+    depends_on:
+      - rabbitmq
+    command: tcp rabbitmq:5672 -t 300s -i 250ms
+
+  wait-for-db:
+    image: atkrad/wait4x
+    depends_on:
+      - mongo
+    command: tcp mongo:27017 -t 300s -i 250ms
+  mongo:
+    image: mongo:4.4
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+volumes:
+  mongo-data:
