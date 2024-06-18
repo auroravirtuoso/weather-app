@@ -43,5 +43,5 @@ cache/
 # Go mod cache
 go.sum
 
-# .env
+# Ignore environment variables
 .env
