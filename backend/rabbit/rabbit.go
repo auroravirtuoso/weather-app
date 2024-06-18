@@ -1,7 +1,6 @@
 package rabbit
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/streadway/amqp"
@@ -11,7 +10,6 @@ var Conn *amqp.Connection
 var Ch *amqp.Channel
 
 func InitializeRabbitMQ(rabbitmqURL string) {
-	fmt.Println(rabbitmqURL)
 	var err error
 	Conn, err = amqp.Dial(rabbitmqURL)
 	FailOnError(err, "Failed to connect to RabbitMQ")

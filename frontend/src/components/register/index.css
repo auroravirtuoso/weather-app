@@ -1,0 +1,10 @@
+.register {
+	vertical-align: middle;
+	display: flex;
+	flex-direction: column;
+	width: 50vw;
+}
+
+.input-margin {
+	margin-bottom: 2em;
+}

@@ -12,7 +12,7 @@ export default function BasicLineChart({time, temperature}) {
 			xAxis={[{
 				data: time,
 				scaleType: 'time',
-				valueFormatter: (date) => date.getFullYear() + "/" + date.getMonth() + "/" + date.getDate(),
+				valueFormatter: (date) => date.getFullYear() + "/" + (date.getMonth() + 1) + "/" + date.getDate(),
 				label: "Time"
 			}]}
 			series={[

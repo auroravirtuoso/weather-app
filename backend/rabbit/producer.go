@@ -43,12 +43,9 @@ func ProduceWeatherData(email string) {
 		return
 	}
 
-	fmt.Println(geoarr)
-
 	var start_date string
 	if len(user.Time) == 0 {
 		start_date = time.Now().AddDate(-3, 0, -1).Format("2006-01-02")
-		// start_date = time.Now().AddDate(0, 0, -1).Format("2006-01-02")
 	} else {
 		last, err := time.Parse("2006-01-02T15:04", user.Time[len(user.Time)-1])
 		if err != nil {
@@ -58,7 +55,6 @@ func ProduceWeatherData(email string) {
 		start_date = last.Format("2006-01-02")
 	}
 	end_date := time.Now().Format("2006-01-02")
-	fmt.Println(time.Now().AddDate(-3, 0, -1).Format("2006-01-02") + " -> " + time.Now().Format("2006-01-02"))
 
 	var api_url string = "https://archive-api.open-meteo.com/v1/era5"
 	api_url += fmt.Sprintf("?latitude=%f", geoarr[0].Lat)
@@ -66,23 +62,21 @@ func ProduceWeatherData(email string) {
 	api_url += "&start_date=" + url.QueryEscape(start_date)
 	api_url += "&end_date=" + url.QueryEscape(end_date)
 	api_url += "&hourly=" + "temperature_2m"
-	// api_url = url.QueryEscape(api_url)
-	fmt.Println(api_url)
 	client := http.Client{
 		Timeout: 1 * time.Minute,
 	}
 	resp, err := client.Get(api_url)
 	if err != nil {
 		FailOnError(err, "API Error")
+		return
 	}
 	defer resp.Body.Close()
-
-	fmt.Println(resp.Body)
 
 	var body map[string]interface{}
 	err = json.NewDecoder(resp.Body).Decode(&body)
 	if err != nil {
 		FailOnError(err, "JSON Error")
+		return
 	}
 
 	body_hourly := body["hourly"].(map[string]interface{})

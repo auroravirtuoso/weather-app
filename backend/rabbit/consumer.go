@@ -52,8 +52,6 @@ func ConsumeWeatherData() {
 			time_arr := data["time"].([]interface{})
 			temperature_2m := data["temperature_2m"].([]interface{})
 
-			fmt.Println("HELLO")
-
 			collection := database.OpenCollection(database.Client, "users")
 			var user models.User
 			err = collection.FindOne(context.TODO(), map[string]interface{}{"email": email}).Decode(&user)
@@ -65,7 +63,6 @@ func ConsumeWeatherData() {
 			var idx int = 0
 			if len(user.Time) > 0 {
 				last, err := time.Parse("2006-01-02T15:04", user.Time[len(user.Time)-1])
-				fmt.Println(last.Format("2006-01-02"))
 				if err != nil {
 					FailOnError(err, "Invalid Time Format")
 					break
@@ -82,23 +79,10 @@ func ConsumeWeatherData() {
 				}
 			}
 
-			fmt.Println("idx = ", idx)
-			fmt.Print(len(user.Temperature_2m), " -> ")
 			for ; idx < len(time_arr); idx++ {
 				user.Time = append(user.Time, time_arr[idx].(string))
 				user.Temperature_2m = append(user.Temperature_2m, fmt.Sprintf("%f", temperature_2m[idx].(float64)))
 			}
-			fmt.Println(len(user.Temperature_2m))
-			// user.Time = append(user.Time, time_arr[idx:]...)
-			// user.Temperature_2m = append(user.Temperature_2m, temperature_2m[idx:]...)
-
-			// collection.UpdateByID(context.TODO(), user.ID, user)
-			// collection.UpdateOne(context.TODO(), map[string]interface{}{"email": user.Email}, user)
-			// collection.UpdateOne(context.TODO(), map[string]interface{}{"email": user.Email}, map[string]interface{}{
-			// 	"time":           user.Time,
-			// 	"temperature_2m": user.Temperature_2m,
-			// })
-			// rlt := collection.FindOne(context.TODO(), map[string]interface{}{"email": user.Email})
 
 			filter := bson.M{"email": user.Email}
 			update := bson.M{

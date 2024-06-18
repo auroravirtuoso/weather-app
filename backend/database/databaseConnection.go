@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
@@ -19,8 +18,6 @@ func DBinstance() *mongo.Client {
 	}
 
 	MongoDb := os.Getenv("MONGODB_URI")
-
-	fmt.Println("MongoDB" + MongoDb)
 
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(MongoDb))
 	if err != nil {

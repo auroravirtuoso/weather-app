@@ -1,6 +1,8 @@
+import './index.css';
 import { useState } from "react";
 import axios from 'axios';
 import Cookie from 'js-cookie';
+import { Button, Input } from "@mui/material";
 
 function Login() {
 	const [email, setEmail] = useState("");
@@ -28,26 +30,32 @@ function Login() {
 
 	return (
 		<>
-			<form autoComplete="on" /*onSubmit={handleLogin}*/>
-				<input
+			<form
+				className='login'
+				autoComplete="on"
+				/*onSubmit={handleLogin}*/
+			>
+				<Input
+					className='input-margin'
 					type="text"
 					placeholder="Email"
 					value={email}
 					onChange={(e) => setEmail(e.target.value)}
 				/>
-				<input
+				<Input
+					className='input-margin'
 					type="password"
 					placeholder="Password"
 					value={password}
 					onChange={(e) => setPassword(e.target.value)}
 				/>
-				<button
+				<Button
 					type="submit"
 					onClick={e => {
 						e.preventDefault();
 						login();
 					}}
-				>Login</button>
+				>Login</Button>
 			</form>
 		</>
 	);

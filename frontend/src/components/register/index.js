@@ -1,5 +1,7 @@
+import './index.css';
 import { useState } from "react";
 import axios from "axios";
+import { Button, Input } from "@mui/material";
 
 function Register() {
 	const [email, setEmail] = useState("");
@@ -39,50 +41,61 @@ function Register() {
 
 	return (
 		<>
-			<form /*onSubmit={handleLogin}*/>
-				<input
+			<form
+				className="register"
+				autoComplete='on'
+				/*onSubmit={handleLogin}*/
+			>
+				<Input
+					className='input-margin'
 					type="text"
-					placeholder="Email"
+					placeholder="Email e.g., johndoe@domain.com"
 					value={email}
 					onChange={(e) => setEmail(e.target.value)}
 				/>
-				<input
+				<Input
+					className='input-margin'
 					type="password"
 					placeholder="Password"
 					value={password}
 					onChange={(e) => setPassword(e.target.value)}
 				/>
-				<input
+				<Input
+					className='input-margin'
 					type="password"
-					placeholder="Confirm Password"
+					placeholder="Confirm your password"
 					value={passwordConfirm}
 					onChange={(e) => setPasswordConfirm(e.target.value)}
 				/>
-				<input
+				<Input
+					className='input-margin'
 					type="text"
-					placeholder="City"
+					placeholder="City e.g., Los Angeles, San Francisco, Boston, ..."
 					value={city}
 					onChange={(e) => setCity(e.target.value)}
 				/>
-				<input
+				<Input
+					className='input-margin'
 					type="text"
-					placeholder="State"
+					placeholder="State e.g., California, Georgia, Texas, ..."
 					value={state}
 					onChange={(e) => setState(e.target.value)}
 				/>
-				<input
+				<Input
+					className='input-margin'
 					type="text"
-					placeholder="Country"
+					placeholder="Country code e.g., US, UK, AU, CA, IE, ..."
 					value={country}
 					onChange={(e) => setCountry(e.target.value)}
 				/>
-				<button
+				<Button
+					className='input-margin'
 					type="submit"
 					onClick={e => {
 						e.preventDefault();
 						register();
 					}}
-				>Register</button>
+				>Register</Button>
 			</form>
 		</>
 	);

@@ -2,7 +2,6 @@ package geolocation
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -31,20 +30,16 @@ func GetLatLonFromCity(city string, state string, country string) (geoarr []Geol
 	}
 	api_url += "&limit=5"
 	api_url += "&appid=" + os.Getenv("OPENWEATHERMAP_API_KEY")
-	// api_url = url.QueryEscape(api_url)
-	fmt.Println(api_url)
 	client := http.Client{
 		Timeout: 1 * time.Minute,
 	}
 	resp, e := client.Get(api_url)
 	if e != nil {
+		log.Println("GEOAPI ERROR")
 		err = e
 		return
 	}
 	defer resp.Body.Close()
-
-	fmt.Println("BODY")
-	fmt.Println(resp.Body)
 
 	var data []interface{}
 	e = json.NewDecoder(resp.Body).Decode(&data)
@@ -66,27 +61,36 @@ func GetLatLonFromCity(city string, state string, country string) (geoarr []Geol
 }
 
 func GetLatLonFromCityHandler(w http.ResponseWriter, r *http.Request) {
-	// w.Header().Set("Access-Control-Allow-Origin", "*")
-
-	fmt.Println("GetLatLonFromCityHandler")
 	var vars map[string]string
 	err := json.NewDecoder(r.Body).Decode(&vars)
 	if err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
-	city := vars["city"]
-	state := vars["state"]
-	country := vars["country"]
-	fmt.Println(city)
-	fmt.Println(state)
-	fmt.Println(country)
+	query := r.URL.Query()
+	var city string
+	if query.Has("city") {
+		city = query.Get("city")
+	} else {
+		http.Error(w, "city is required", http.StatusBadRequest)
+	}
+	var state string
+	if query.Has("state") {
+		state = query.Get("state")
+	} else {
+		http.Error(w, "state is required", http.StatusBadRequest)
+	}
+	var country string
+	if query.Has("country") {
+		country = query.Get("country")
+	} else {
+		http.Error(w, "country is required", http.StatusBadRequest)
+	}
+
 	geoarr, err := GetLatLonFromCity(city, state, country)
 	if err != nil {
 		http.Error(w, "Fetch Error", http.StatusInternalServerError)
 	}
-
-	fmt.Println(geoarr)
 
 	if len(geoarr) == 0 {
 		http.Error(w, "Specified city not found", http.StatusNotFound)
