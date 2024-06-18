@@ -2,6 +2,7 @@ import './index.css';
 import { useState } from "react";
 import axios from "axios";
 import { Button, Input } from "@mui/material";
+import { Link } from 'react-router-dom';
 
 function Register() {
 	const [email, setEmail] = useState("");
@@ -96,6 +97,7 @@ function Register() {
 						register();
 					}}
 				>Register</Button>
+				<Link to='/login'>Already have an account? Login!</Link>
 			</form>
 		</>
 	);

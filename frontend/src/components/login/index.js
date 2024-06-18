@@ -3,6 +3,7 @@ import { useState } from "react";
 import axios from 'axios';
 import Cookie from 'js-cookie';
 import { Button, Input } from "@mui/material";
+import { Link } from 'react-router-dom';
 
 function Login() {
 	const [email, setEmail] = useState("");
@@ -18,7 +19,7 @@ function Login() {
 			console.log(res);
 			if (res.data.success === true) {
 				Cookie.set('token', res.data.token);
-				window.location = "/";
+				window.location = "/home";
 			} else {
 				alert("Invalid Email or Password");
 			}
@@ -56,6 +57,7 @@ function Login() {
 						login();
 					}}
 				>Login</Button>
+				<Link to='/register'>New to Weather App? Register</Link>
 			</form>
 		</>
 	);

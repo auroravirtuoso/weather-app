@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import BasicLineChart from "./chart";
 import axios from "axios";
 import Button from '@mui/material/Button';
-import Box from '@mui/material/Box';
 import ButtonGroup from '@mui/material/ButtonGroup';
 
 function Home() {
@@ -43,13 +42,6 @@ function Home() {
 
 	function retrieveWeatherData() {
 		const backend_url = process.env.REACT_APP_BACKEND_URL;
-		// let end_date = new Date();
-		// let start_date = new Date(end_date);
-		// start_date.setFullYear(start_date.getFullYear() - 2);
-		// end_date.setFullYear(end_date.getFullYear() - 1);
-		// start_date = start_date.toISOString().slice(0, 10);
-		// end_date = end_date.toISOString().slice(0, 10);
-		// axios.get(`${backend_url}/api/v1/weather?start_date=${start_date}&end_date=${end_date}`, {
 		axios.get(`${backend_url}/api/v1/userweather`, {
 				withCredentials: true
 		}).then(res => {
